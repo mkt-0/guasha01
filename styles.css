@@ -229,3 +229,104 @@ form input:focus, form select:focus, form textarea:focus {
   .modal-content { width: 95%; padding: 20px; }
   form input, form select, form textarea { font-size: 18px; padding: 14px; }
 }
+
+/* iPhone风格日历 */
+.calendar-section {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calendar-header h2 {
+  font-size: 20px;
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.btn-icon {
+  background: #e8f4f8;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  color: #1a5f7a;
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  position: relative;
+  background: #f8fbfc;
+}
+
+.day.other-month {
+  color: #ccc;
+  background: transparent;
+}
+
+.day.today {
+  background: #1a5f7a;
+  color: white;
+  font-weight: bold;
+}
+
+.day.selected {
+  background: #e8f4f8;
+  border: 2px solid #1a5f7a;
+}
+
+.day.has-appointment::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #f39c12;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 6px;
+}
+
+.day.today.has-appointment::after {
+  background: white;
+}
+
+.selected-day-section {
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .day { font-size: 15px; }
+  .btn-icon { width: 44px; height: 44px; }
+}
