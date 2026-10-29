@@ -19,9 +19,23 @@
       <p class="subtitle">预约仪表盘 · 手机专用</p>
     </header>
 
-    <section class="today-section">
-      <h2>今日预约</h2>
-      <div id="today-list" class="appointment-list"></div>
+    <!-- iPhone风格日历 -->
+    <section class="calendar-section">
+      <div class="calendar-header">
+        <button id="prev-month" class="btn-icon">‹</button>
+        <h2 id="current-month">2026年10月</h2>
+        <button id="next-month" class="btn-icon">›</button>
+      </div>
+      <div class="weekdays">
+        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+    </section>
+
+    <!-- 选中日期的预约 -->
+    <section class="selected-day-section">
+      <h2 id="selected-day-title">今日预约</h2>
+      <div id="selected-day-list" class="appointment-list"></div>
     </section>
 
     <section class="actions">
@@ -30,22 +44,9 @@
       <button id="export-btn" class="btn-secondary">📋 复制今日名单</button>
     </section>
 
-    <section class="upcoming-section">
-      <h2>近期预约（未来7天）</h2>
-      <div id="upcoming-list" class="appointment-list"></div>
-    </section>
-
-    <section class="all-section">
-      <h2>全部预约记录</h2>
-      <div id="all-list" class="appointment-list"></div>
-    </section>
-
     <section class="help-section">
-      <h2>怎么用（只需看一次）</h2>
-      <p>1. 用iPhone的Safari打开这个页面</p>
-      <p>2. 点底部分享按钮 →「添加到主屏幕」</p>
-      <p>3. 之后从桌面图标打开，就像APP一样</p>
-      <p>4. 添加预约后，点「添加到日历」，会自动进手机日历并设置提醒</p>
+      <h2>怎么用</h2>
+      <p>点日历上的某一天，下面就会显示那天的预约。点大按钮添加新预约即可。</p>
     </section>
   </div>
 
