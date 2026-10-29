@@ -1,13 +1,16 @@
-// 刮痧工作室预约仪表盘
+// 刮痧工作室预约仪表盘（带 iPhone 风格日历）
 const STORAGE_KEY = 'guasha_appointments';
 
 let appointments = [];
+let currentDate = new Date();
+let selectedDate = new Date().toISOString().split('T')[0];
 
-// 加载数据
+// 加载数据（保持原有 key，数据不会丢失）
 function loadAppointments() {
   const data = localStorage.getItem(STORAGE_KEY);
   appointments = data ? JSON.parse(data) : [];
-  renderAll();
+  renderCalendar();
+  renderSelectedDay();
 }
 
 // 保存数据
@@ -20,34 +23,86 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-// 格式化日期时间显示
-function formatDateTime(dateStr, timeStr) {
-  const date = new Date(dateStr + 'T' + timeStr);
-  const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const weekday = weekdays[date.getDay()];
-  return `${month}月${day}日 ${weekday} ${timeStr}`;
+function formatDate(date) {
+  return date.toISOString().split('T')[0];
 }
 
 function isToday(dateStr) {
-  const today = new Date().toISOString().split('T')[0];
-  return dateStr === today;
+  return dateStr === new Date().toISOString().split('T')[0];
 }
 
-function isUpcoming(dateStr) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const apptDate = new Date(dateStr);
-  const diffDays = (apptDate - today) / (1000 * 60 * 60 * 24);
-  return diffDays >= 0 && diffDays <= 7;
+// 渲染日历
+function renderCalendar() {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  document.getElementById('current-month').textContent = `${year}年${month + 1}月`;
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDay = firstDay.getDay();
+  const daysInMonth = lastDay.getDate();
+
+  const grid = document.getElementById('calendar-grid');
+  grid.innerHTML = '';
+
+  // 上个月的空白天
+  for (let i = 0; i < startDay; i++) {
+    const prev = new Date(year, month, -startDay + i + 1);
+    grid.appendChild(createDayElement(prev, true));
+  }
+
+  // 本月
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    grid.appendChild(createDayElement(date, false));
+  }
+
+  // 下个月补齐
+  const totalCells = startDay + daysInMonth;
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 1; i <= remaining; i++) {
+    const next = new Date(year, month + 1, i);
+    grid.appendChild(createDayElement(next, true));
+  }
 }
 
-// 渲染列表
-function renderList(containerId, list, emptyText) {
-  const container = document.getElementById(containerId);
+function createDayElement(date, otherMonth) {
+  const div = document.createElement('div');
+  const dateStr = formatDate(date);
+  div.className = 'day';
+  if (otherMonth) div.classList.add('other-month');
+  if (isToday(dateStr)) div.classList.add('today');
+  if (dateStr === selectedDate) div.classList.add('selected');
+  if (appointments.some(a => a.date === dateStr)) div.classList.add('has-appointment');
+  div.textContent = date.getDate();
+  div.onclick = () => selectDate(dateStr);
+  return div;
+}
+
+function selectDate(dateStr) {
+  selectedDate = dateStr;
+  renderCalendar();
+  renderSelectedDay();
+}
+
+// 渲染选中日期的预约
+function renderSelectedDay() {
+  const list = appointments
+    .filter(a => a.date === selectedDate)
+    .sort((a, b) => a.time.localeCompare(b.time));
+
+  const title = document.getElementById('selected-day-title');
+  const container = document.getElementById('selected-day-list');
+
+  if (isToday(selectedDate)) {
+    title.textContent = '今日预约';
+  } else {
+    const d = new Date(selectedDate);
+    title.textContent = `${d.getMonth() + 1}月${d.getDate()}日预约`;
+  }
+
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty">${emptyText}</div>`;
+    container.innerHTML = '<div class="empty">这天暂无预约</div>';
     return;
   }
 
@@ -55,7 +110,7 @@ function renderList(containerId, list, emptyText) {
     <div class="appointment-card ${isToday(appt.date) ? 'today' : ''}">
       <div class="appointment-info">
         <h3>${appt.name}</h3>
-        <p>📅 ${formatDateTime(appt.date, appt.time)}</p>
+        <p>⏰ ${appt.time}</p>
         <p>📞 ${appt.phone || '未填电话'}</p>
         <p>💼 ${appt.service}${appt.notes ? ' · ' + appt.notes : ''}</p>
       </div>
@@ -67,32 +122,22 @@ function renderList(containerId, list, emptyText) {
   `).join('');
 }
 
-function renderAll() {
-  const today = new Date().toISOString().split('T')[0];
-  const todayList = appointments
-    .filter(a => a.date === today)
-    .sort((a, b) => a.time.localeCompare(b.time));
+// 月份切换
+document.getElementById('prev-month').onclick = () => {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar();
+};
+document.getElementById('next-month').onclick = () => {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar();
+};
 
-  const upcomingList = appointments
-    .filter(a => isUpcoming(a.date) && a.date !== today)
-    .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-
-  const allList = [...appointments].sort((a, b) => 
-    b.date.localeCompare(a.date) || b.time.localeCompare(a.time)
-  );
-
-  renderList('today-list', todayList, '今天暂无预约');
-  renderList('upcoming-list', upcomingList, '未来7天暂无预约');
-  renderList('all-list', allList, '暂无任何预约记录');
-}
-
-// 打开添加弹窗
+// 打开添加弹窗（默认选中日期）
 function openAddModal() {
   document.getElementById('modal-title').textContent = '添加预约';
   document.getElementById('edit-id').value = '';
   document.getElementById('appointment-form').reset();
-  // 默认今天
-  document.getElementById('date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('date').value = selectedDate;
   document.getElementById('modal').classList.remove('hidden');
 }
 
@@ -117,11 +162,12 @@ function deleteAppointment(id) {
   if (confirm('确定要删除这个预约吗？')) {
     appointments = appointments.filter(a => a.id !== id);
     saveAppointments();
-    renderAll();
+    renderCalendar();
+    renderSelectedDay();
   }
 }
 
-// 保存表单后自动提示添加到日历
+// 保存表单
 document.getElementById('appointment-form').addEventListener('submit', function(e) {
   e.preventDefault();
 
@@ -145,10 +191,11 @@ document.getElementById('appointment-form').addEventListener('submit', function(
   }
 
   saveAppointments();
-  renderAll();
+  selectedDate = appointment.date;
+  renderCalendar();
+  renderSelectedDay();
   document.getElementById('modal').classList.add('hidden');
 
-  // 保存成功后提示添加到日历
   setTimeout(() => {
     if (confirm('预约已保存！\n\n是否立即添加到手机日历（会自动提醒）？')) {
       addToCalendar(appointment);
@@ -162,10 +209,10 @@ document.getElementById('cancel-btn').addEventListener('click', () => {
 
 document.getElementById('add-btn').addEventListener('click', openAddModal);
 
-// 生成并下载/打开 .ics 日历文件（iPhone会直接打开日历）
+// 生成并打开 .ics
 function addToCalendar(appt) {
   const start = new Date(appt.date + 'T' + appt.time);
-  const end = new Date(start.getTime() + 60 * 60 * 1000); // 默认1小时
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
 
   const formatICS = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
@@ -205,43 +252,38 @@ END:VCALENDAR`;
   alert('已生成日历文件。\n\n在iPhone上会自动打开日历，点右上角「添加」即可，提醒已设置（提前30分钟和10分钟）。');
 }
 
-// 批量添加今日或选中到日历（可选按钮）
 document.getElementById('calendar-btn').addEventListener('click', () => {
-  const today = new Date().toISOString().split('T')[0];
-  const todayList = appointments.filter(a => a.date === today);
-  if (todayList.length === 0) {
-    alert('今天暂无预约可添加');
+  const list = appointments.filter(a => a.date === selectedDate);
+  if (list.length === 0) {
+    alert('这天暂无预约可添加');
     return;
   }
-  if (confirm(`是否把今天的 ${todayList.length} 个预约都添加到日历？`)) {
-    todayList.forEach((appt, i) => {
+  if (confirm(`是否把这天的 ${list.length} 个预约都添加到日历？`)) {
+    list.forEach((appt, i) => {
       setTimeout(() => addToCalendar(appt), i * 800);
     });
   }
 });
 
-// 导出今日名单（复制到剪贴板）
+// 导出选中日期名单
 document.getElementById('export-btn').addEventListener('click', () => {
-  const today = new Date().toISOString().split('T')[0];
-  const todayList = appointments
-    .filter(a => a.date === today)
+  const list = appointments
+    .filter(a => a.date === selectedDate)
     .sort((a, b) => a.time.localeCompare(b.time));
 
-  if (todayList.length === 0) {
-    alert('今天暂无预约');
+  if (list.length === 0) {
+    alert('这天暂无预约');
     return;
   }
 
-  const text = todayList.map((a, i) => 
+  const text = list.map((a, i) => 
     `${i + 1}. ${a.time} ${a.name} ${a.phone || ''} ${a.service}${a.notes ? ' (' + a.notes + ')' : ''}`
   ).join('\n');
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(() => {
-      alert('今日预约名单已复制！\n可以直接粘贴到微信发给客人。');
-    }).catch(() => {
-      showCopyFallback(text);
-    });
+      alert('名单已复制！可以直接粘贴到微信。');
+    }).catch(() => showCopyFallback(text));
   } else {
     showCopyFallback(text);
   }
