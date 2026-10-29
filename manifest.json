@@ -1,0 +1,15 @@
+{
+  "name": "刮痧工作室预约",
+  "short_name": "刮痧预约",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1a5f7a",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
